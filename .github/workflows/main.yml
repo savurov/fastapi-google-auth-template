@@ -76,7 +76,7 @@ jobs:
       - name: Initialize databases (run SQL scripts)
         run: |
           psql postgresql://local:local@localhost:5432/local -f alembic/init_migration_db.sql
-          psql postgresql://local:local@localhost:5432/local -f tests/init_test_db.sql
+          psql postgresql://local:local@localhost:5432/local -f alembic/init_test_db.sql
 
       # ALEMBIC
       - name: Apply Alembic migrations (upgrade to head)
