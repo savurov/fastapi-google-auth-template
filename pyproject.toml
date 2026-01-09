@@ -1,0 +1,80 @@
+[project]
+name = "rename_me"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.17.2",
+    "argon2-cffi>=25.1.0",
+    "asyncpg>=0.31.0",
+    "fastapi[standard]>=0.124.4",
+    "google-auth[requests]>=2.47.0",
+    "pydantic-settings>=2.12.0",
+    "pyjwt>=2.10.1",
+    "respx>=0.22.0",
+    "sqlalchemy>=2.0.45",
+]
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.18",
+    "faker>=38.2.0",
+    "mypy>=1.19.0",
+    "pre-commit>=4.5.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.9",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+  "."
+]
+
+[tool.mypy]
+files = ["src", "tests"]
+strict = true
+warn_return_any = false
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+warn_required_dynamic_aliases = true
+
+[tool.ruff]
+target-version = "py313"
+extend-exclude = ["alembic"]
+
+[tool.ruff.lint]
+extend-select = [
+    "E",      # pycodestyle
+    "W",      # warnings
+    "I",      # isort (imports)
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # bugbear
+    "C4",     # comprehensions
+    "SIM",    # simplify
+    "ARG",    # unused arguments
+    "PTH",    # pathlib modernization
+    "RUF",    # Ruff-specific rules
+    "ASYNC",  # async safety
+    "FAST",   # FastAPI-specific checks
+    "ERA",    # eradicate commented-out code
+    "PL",     # pylint
+    "G",      # logging format checks
+]
+
+[tool.coverage.run]
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+show_missing = true
+
+fail_under = 100
+
+exclude_also = [
+  "self.environment == "
+]

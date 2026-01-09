@@ -1,0 +1,100 @@
+name: Quality checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: local
+          POSTGRES_PASSWORD: local
+          POSTGRES_DB: local
+        ports:
+          - 5432:5432
+
+    steps:
+      # SETUP
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.4"
+
+      - name: Install python
+        run: uv python install 3.13.9
+
+      - name: Install dependencies
+        run: uv sync
+
+      # PRE COMMIT
+      - name: Load Pre-commit cache
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('./.github/pre-commit-config-ci.yaml') }}
+          restore-keys: ${{ runner.os }}-pre-commit-
+      - name: Run pre-commit-hooks
+        run: uv run pre-commit run --all-files -c ./.github/pre-commit-config-ci.yaml
+
+      # RUFF FORMAT
+      - name: Run Ruff format
+        run: uv run ruff format --diff
+
+      # RUFF LINT
+      - name: Run Ruff lint
+        run: uv run ruff check
+
+      # MYPY
+      - name: Load Mypy Cache
+        uses: actions/cache@v4.3.0
+        with:
+          path: .mypy_cache
+          key: ${{ runner.os }}-mypy-${{ hashFiles('pyproject.toml')}}
+          restore-keys: ${{ runner.os }}-mypy-
+
+      - name: Run Mypy
+        run: uv run mypy .
+
+      # INIT DB
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h localhost -U local -d local; do
+            echo "Waiting for postgres..."
+            sleep 1
+          done
+
+      - name: Initialize databases (run SQL scripts)
+        run: |
+          psql postgresql://local:local@localhost:5432/local -f alembic/init_migration_db.sql
+          psql postgresql://local:local@localhost:5432/local -f tests/init_test_db.sql
+
+      # ALEMBIC
+      - name: Apply Alembic migrations (upgrade to head)
+        run: uv run alembic upgrade head
+
+      - name: Ensure models match database schema
+        run: uv run alembic check
+
+      - name: Test Alembic downgrade (rollback to base)
+        run: uv run alembic downgrade base
+
+      # PYTEST
+      - name: Load Pytest Cache
+        uses: actions/cache@v4.3.0
+        with:
+          path: .pytest_cache
+          key: ${{ runner.os }}-pytest-${{ hashFiles('pyproject.toml')}}
+          restore-keys: ${{ runner.os }}-pytest-
+
+      - name: Run Pytest (coverage)
+        run: uv run pytest tests --cov=src

@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: local
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+      - ./alembic/init_migration_db.sql:/docker-entrypoint-initdb.d/init_migration_db.sql:ro,z
+      - ./alembic/init_test_db.sql:/docker-entrypoint-initdb.d/init_test_db.sql:ro,z
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "local", "-d", "local", "-h", "127.0.0.1", "-p", "5432"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WATCHFILES_FORCE_POLLING: true
+      POSTGRES_HOST: db
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src:z
+    ports:
+      - "127.0.0.1:8000:8000"
+    command: ["--reload"]
