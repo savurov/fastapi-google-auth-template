@@ -42,6 +42,7 @@ def set_auth_cookie(response: Response, user_id: UUID) -> None:
         key=AUTH_COOKIE_NAME,
         value=token,
         httponly=True,
+        domain=settings.cokie_domain,
         secure=settings.is_production,
         max_age=60 * settings.cookie_expire_minutes,
     )
@@ -51,6 +52,7 @@ def delete_auth_cookie(response: Response) -> None:
     response.delete_cookie(
         key=AUTH_COOKIE_NAME,
         httponly=True,
+        domain=settings.cokie_domain,
         secure=settings.is_production,
     )
 
