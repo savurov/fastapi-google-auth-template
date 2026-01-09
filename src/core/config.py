@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
     frontend_oauth_error_url: str = "http://localhost:5173/oauth-error"
 
-    google_client_id: str
-    google_client_secret: str
-    google_redirect_uri: str
+    google_client_id: str = "test-client-id"
+    google_client_secret: str = "test-client-secret"
+    google_redirect_uri: str = "http://localhost:5173/api/v1/auth/google/callback"
 
     postgres_user: str = "local"
     postgres_password: str = "local"
@@ -67,4 +67,4 @@ class Settings(BaseSettings):
         return self.environment == EnvEnum.development
 
 
-settings = Settings()  # pyright: ignore[reportCallIssue]
+settings = Settings()
