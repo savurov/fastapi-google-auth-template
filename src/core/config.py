@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     secret_key: str = "local"
     cookie_expire_minutes: int = 60 * 24 * 365
     cokie_domain: str | None = None
-    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origins: list[str] = ["*"]
     frontend_url: str = "http://localhost:5173"
     frontend_oauth_error_url: str = "http://localhost:5173/oauth-error"
 
